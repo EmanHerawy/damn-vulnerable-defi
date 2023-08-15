@@ -21,6 +21,7 @@ contract FlashLoanReceiver is IERC3156FlashBorrower {
         pool = _pool;
     }
 
+    // pool can call it multiple times and drain all the funds
     function onFlashLoan(
         address,
         address token,
