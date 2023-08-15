@@ -29,6 +29,7 @@ contract TrusterLenderPool is ReentrancyGuard {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         token.transfer(borrower, amount);
+        // here is the vulnerability. can send any arbitrary data 
         target.functionCall(data);
 
         if (token.balanceOf(address(this)) < balanceBefore)
